@@ -1,10 +1,14 @@
+# pip-compatible fallback — preferred install method is: uv sync
+# To regenerate this file: uv export --no-hashes -o requirements.txt
+
 # Kubeflow Pipelines SDK
 kfp==2.7.0
-kfp-google-cloud==0.5.0
 
 # Google Cloud SDK for Vertex AI
 google-cloud-aiplatform>=1.42.0
 
-# Development utilities
-pandas>=2.0.0
-scikit-learn>=1.3.0
+# Hugging Face stack
+click>=8.0.0
+datasets>=2.19.0
+torch>=2.2.0
+transformers>=4.40.0

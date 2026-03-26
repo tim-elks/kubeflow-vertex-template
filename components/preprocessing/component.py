@@ -1,58 +1,107 @@
 """Preprocessing pipeline component.
 
-This component reads the raw dataset produced by data_ingestion, applies
-feature engineering and train/test splitting, and writes the results to
-output paths that downstream components can consume.
+This component tokenizes a raw Hugging Face dataset produced by data_ingestion
+and writes train/test splits ready for the Trainer.
 """
 
-import argparse
-import json
 import os
 
+import click
+from datasets import DatasetDict, load_from_disk
+from transformers import AutoTokenizer
 
-def preprocess(input_path: str, output_train_path: str, output_test_path: str, test_size: float = 0.2) -> None:
-    """Apply preprocessing to the raw dataset and split into train/test sets.
+
+def preprocess(
+    input_path: str,
+    output_train_path: str,
+    output_test_path: str,
+    model_name: str = "distilbert-base-uncased",
+    text_column: str = "text",
+    test_size: float = 0.2,
+    max_length: int = 128,
+) -> None:
+    """Tokenize the dataset and split into train/test sets.
 
     Args:
-        input_path:        Path to the raw dataset artifact from data_ingestion.
-        output_train_path: Destination path for the training split.
-        output_test_path:  Destination path for the test split.
+        input_path:        Path to the Arrow dataset directory from data_ingestion.
+        output_train_path: Destination directory for the tokenized training split.
+        output_test_path:  Destination directory for the tokenized test split.
+        model_name:        Hugging Face model name used to load the tokenizer.
+        text_column:       Name of the text column in the dataset.
         test_size:         Fraction of data to reserve for testing (0–1).
+        max_length:        Maximum token sequence length.
     """
-    print(f"[preprocessing] Loading data from: {input_path}")
-    with open(input_path) as f:
-        raw = json.load(f)
+    print(f"[preprocessing] Loading dataset from: {input_path}")
+    dataset = load_from_disk(input_path)
+
+    # Flatten to a single Dataset if the loaded object is already a DatasetDict
+    if isinstance(dataset, DatasetDict):
+        # Merge all splits, then re-split deterministically
+        dataset = dataset["train"] if "train" in dataset else next(iter(dataset.values()))
+
+    print(f"[preprocessing] Tokenizing with: {model_name!r} (max_length={max_length})")
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     # -----------------------------------------------------------------
-    # Replace the block below with your actual preprocessing logic, e.g.:
-    #   df = pd.DataFrame(raw)
-    #   df = df.dropna()
-    #   df["feature_1"] = (df["feature_1"] - mean) / std
-    #   train, test = train_test_split(df, test_size=test_size)
+    # Adjust the tokenization logic for your task, e.g. add label mapping,
+    # handle sentence-pairs, etc.
     # -----------------------------------------------------------------
-    total_rows = raw.get("rows", 1000)
-    test_rows = int(total_rows * test_size)
-    train_rows = total_rows - test_rows
+    def tokenize(batch):
+        return tokenizer(
+            batch[text_column],
+            truncation=True,
+            padding="max_length",
+            max_length=max_length,
+        )
 
-    train_data = {**raw, "split": "train", "rows": train_rows}
-    test_data = {**raw, "split": "test", "rows": test_rows}
+    dataset = dataset.map(tokenize, batched=True, remove_columns=[text_column])
 
-    for path, data in [(output_train_path, train_data), (output_test_path, test_data)]:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "w") as f:
-            json.dump(data, f, indent=2)
-        print(f"[preprocessing] Written: {path} ({data['rows']} rows)")
+    split = dataset.train_test_split(test_size=test_size, seed=42)
+
+    os.makedirs(output_train_path, exist_ok=True)
+    os.makedirs(output_test_path, exist_ok=True)
+    split["train"].save_to_disk(output_train_path)
+    split["test"].save_to_disk(output_test_path)
+
+    print(f"[preprocessing] Train split ({len(split['train'])} rows) → {output_train_path}")
+    print(f"[preprocessing] Test split  ({len(split['test'])} rows) → {output_test_path}")
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Preprocessing component")
-    parser.add_argument("--input-path", required=True, help="Raw dataset path")
-    parser.add_argument("--output-train-path", required=True, help="Training split output path")
-    parser.add_argument("--output-test-path", required=True, help="Test split output path")
-    parser.add_argument("--test-size", type=float, default=0.2, help="Test fraction (default: 0.2)")
-    args = parser.parse_args()
-
-    preprocess(args.input_path, args.output_train_path, args.output_test_path, args.test_size)
+@click.command()
+@click.option("--input-path", required=True, help="Arrow dataset directory from data_ingestion")
+@click.option("--output-train-path", required=True, help="Directory for tokenized training split")
+@click.option("--output-test-path", required=True, help="Directory for tokenized test split")
+@click.option(
+    "--model-name",
+    default="distilbert-base-uncased",
+    show_default=True,
+    help="Hugging Face model name for the tokenizer",
+)
+@click.option(
+    "--text-column", default="text", show_default=True, help="Dataset column containing text"
+)
+@click.option("--test-size", type=float, default=0.2, show_default=True, help="Test fraction (0–1)")
+@click.option(
+    "--max-length", type=int, default=128, show_default=True, help="Max token sequence length"
+)
+def main(
+    input_path: str,
+    output_train_path: str,
+    output_test_path: str,
+    model_name: str,
+    text_column: str,
+    test_size: float,
+    max_length: int,
+) -> None:
+    preprocess(
+        input_path,
+        output_train_path,
+        output_test_path,
+        model_name,
+        text_column,
+        test_size,
+        max_length,
+    )
 
 
 if __name__ == "__main__":

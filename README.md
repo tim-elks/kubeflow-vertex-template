@@ -144,7 +144,11 @@ docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/training:latest
 Edit `vertex_ai/config.yaml` with your project details, then:
 
 ```bash
-python vertex_ai/submit_pipeline.py
+# Compile the pipeline spec
+uv run python pipeline/pipeline.py
+
+# Submit to Vertex AI
+uv run python vertex_ai/submit_pipeline.py
 ```
 
 ---

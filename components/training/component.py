@@ -1,65 +1,128 @@
 """Training pipeline component.
 
-This component reads the preprocessed training data, trains a model, and
-writes the model artifact to an output path for downstream serving or
-evaluation components.
+This component fine-tunes a Hugging Face model on the tokenized dataset
+produced by preprocessing and saves the model artifact for downstream
+serving or evaluation.
 """
 
-import argparse
-import json
 import os
 
+import click
+from datasets import load_from_disk
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    Trainer,
+    TrainingArguments,
+)
 
-def train(train_data_path: str, model_output_path: str, n_estimators: int = 100, max_depth: int = 5) -> None:
-    """Train a model on the preprocessed dataset.
+
+def train(
+    train_data_path: str,
+    model_output_path: str,
+    model_name: str = "distilbert-base-uncased",
+    num_labels: int = 2,
+    num_epochs: int = 3,
+    per_device_batch_size: int = 16,
+    learning_rate: float = 2e-5,
+) -> None:
+    """Fine-tune a Hugging Face model on the preprocessed dataset.
 
     Args:
-        train_data_path:   Path to the training split artifact from preprocessing.
-        model_output_path: Destination path for the serialised model artifact.
-        n_estimators:      Number of estimators (for tree-based models).
-        max_depth:         Maximum tree depth (for tree-based models).
+        train_data_path:      Path to the tokenized training Arrow dataset.
+        model_output_path:    Destination directory for the saved model and tokenizer.
+        model_name:           Hugging Face Hub model identifier to fine-tune from.
+        num_labels:           Number of classification labels.
+        num_epochs:           Number of training epochs.
+        per_device_batch_size: Batch size per device.
+        learning_rate:        Learning rate for AdamW.
     """
     print(f"[training] Loading training data from: {train_data_path}")
-    with open(train_data_path) as f:
-        train_data = json.load(f)
+    dataset = load_from_disk(train_data_path)
+    dataset = dataset.with_format("torch")
+
+    print(f"[training] Loading model: {model_name!r} (num_labels={num_labels})")
+    model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=num_labels)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     # -----------------------------------------------------------------
-    # Replace the block below with your actual training logic, e.g.:
-    #   df = pd.DataFrame(train_data["records"])
-    #   X, y = df.drop("label", axis=1), df["label"]
-    #   model = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth)
-    #   model.fit(X, y)
-    #   joblib.dump(model, model_output_path)
+    # Adjust TrainingArguments for your environment, e.g.:
+    #   fp16=True for GPU mixed-precision training
+    #   report_to="wandb" / "tensorboard" for experiment tracking
     # -----------------------------------------------------------------
-    model_metadata = {
-        "model_type": "RandomForestClassifier",
-        "n_estimators": n_estimators,
-        "max_depth": max_depth,
-        "trained_on_rows": train_data.get("rows", 0),
-        "features": train_data.get("features", []),
-        "metrics": {
-            "train_accuracy": 0.95,  # Replace with real metrics
-        },
-        "note": "Replace this with real training logic.",
-    }
+    training_args = TrainingArguments(
+        output_dir=model_output_path,
+        num_train_epochs=num_epochs,
+        per_device_train_batch_size=per_device_batch_size,
+        learning_rate=learning_rate,
+        save_strategy="epoch",
+        logging_steps=50,
+        disable_tqdm=True,  # clean output in pipeline logs
+    )
 
-    os.makedirs(os.path.dirname(model_output_path), exist_ok=True)
-    with open(model_output_path, "w") as f:
-        json.dump(model_metadata, f, indent=2)
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=dataset,
+    )
 
-    print(f"[training] Model artifact written to: {model_output_path}")
-    print(f"[training] Metrics: {model_metadata['metrics']}")
+    print("[training] Starting fine-tuning ...")
+    trainer.train()
+
+    os.makedirs(model_output_path, exist_ok=True)
+    trainer.save_model(model_output_path)
+    tokenizer.save_pretrained(model_output_path)
+
+    print(f"[training] Model and tokenizer saved to: {model_output_path}")
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Training component")
-    parser.add_argument("--train-data-path", required=True, help="Training data path")
-    parser.add_argument("--model-output-path", required=True, help="Output path for model artifact")
-    parser.add_argument("--n-estimators", type=int, default=100, help="Number of estimators (default: 100)")
-    parser.add_argument("--max-depth", type=int, default=5, help="Max tree depth (default: 5)")
-    args = parser.parse_args()
-
-    train(args.train_data_path, args.model_output_path, args.n_estimators, args.max_depth)
+@click.command()
+@click.option("--train-data-path", required=True, help="Tokenized training Arrow dataset directory")
+@click.option("--model-output-path", required=True, help="Directory to save the fine-tuned model")
+@click.option(
+    "--model-name",
+    default="distilbert-base-uncased",
+    show_default=True,
+    help="Hugging Face Hub model identifier",
+)
+@click.option(
+    "--num-labels", type=int, default=2, show_default=True, help="Number of classification labels"
+)
+@click.option(
+    "--num-epochs", type=int, default=3, show_default=True, help="Number of training epochs"
+)
+@click.option(
+    "--per-device-batch-size",
+    type=int,
+    default=16,
+    show_default=True,
+    help="Batch size per device",
+)
+@click.option(
+    "--learning-rate",
+    type=float,
+    default=2e-5,
+    show_default=True,
+    help="Learning rate",
+)
+def main(
+    train_data_path: str,
+    model_output_path: str,
+    model_name: str,
+    num_labels: int,
+    num_epochs: int,
+    per_device_batch_size: int,
+    learning_rate: float,
+) -> None:
+    train(
+        train_data_path,
+        model_output_path,
+        model_name,
+        num_labels,
+        num_epochs,
+        per_device_batch_size,
+        learning_rate,
+    )
 
 
 if __name__ == "__main__":

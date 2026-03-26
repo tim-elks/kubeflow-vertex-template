@@ -1,0 +1,43 @@
+[project]
+name = "kubeflow-vertex-template"
+version = "0.1.0"
+requires-python = ">=3.9"
+dependencies = [
+    "click>=8.0.0",
+    "datasets>=2.19.0",
+    "kfp==2.7.0",
+    "google-cloud-aiplatform>=1.42.0",
+    "torch>=2.2.0",
+    "transformers>=4.40.0",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=3.7.0",
+    "pytest>=8.0.0",
+    "ruff>=0.4.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+]
+ignore = ["E501"]  # line length handled by formatter
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
