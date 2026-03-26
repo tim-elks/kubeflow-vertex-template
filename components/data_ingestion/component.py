@@ -1,49 +1,53 @@
 """Data ingestion pipeline component.
 
-This component downloads or reads raw data and writes it to a GCS bucket
-(or local path during testing) as a dataset artifact.
+This component downloads a dataset from the Hugging Face Hub (or a local
+path during testing) and writes it to disk as a Hugging Face Arrow dataset
+that downstream components can consume.
 """
 
-import json
 import os
 
 import click
+from datasets import load_dataset
 
 
-def ingest_data(data_source: str, output_path: str) -> None:
-    """Download or read raw data and write it to output_path.
+def ingest_data(dataset_name: str, output_path: str, config_name: str = "default") -> None:
+    """Load a dataset from the Hugging Face Hub and save it to output_path.
 
     Args:
-        data_source: URI or identifier for the source data
-                     (e.g. a GCS path, BigQuery table, or local file path).
-        output_path: Destination path for the raw dataset artifact.
+        dataset_name: Hugging Face Hub dataset identifier, e.g. "imdb" or
+                      "squad".  Set to a local directory path to load from disk.
+        output_path:  Destination directory for the saved Arrow dataset.
+        config_name:  Dataset configuration / subset name (default: "default").
     """
-    print(f"[data_ingestion] Reading data from: {data_source}")
+    print(f"[data_ingestion] Loading dataset: {dataset_name!r} (config={config_name!r})")
 
     # -----------------------------------------------------------------
-    # Replace the block below with your actual data-loading logic, e.g.:
-    #   df = pd.read_csv(data_source)          # CSV on GCS / local
-    #   df = bigquery.Client().query(sql)...   # BigQuery
+    # Replace or extend this with your own loading logic, e.g.:
+    #   dataset = load_dataset("csv", data_files={"train": "gs://..."})
+    #   dataset = load_dataset("json", data_files={"train": gcs_path})
     # -----------------------------------------------------------------
-    sample_data = {
-        "source": data_source,
-        "rows": 1000,
-        "features": ["feature_1", "feature_2", "label"],
-        "note": "Replace this with real data loading logic.",
-    }
+    dataset = load_dataset(dataset_name, config_name if config_name != "default" else None)
 
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    with open(output_path, "w") as f:
-        json.dump(sample_data, f, indent=2)
+    os.makedirs(output_path, exist_ok=True)
+    dataset.save_to_disk(output_path)
 
-    print(f"[data_ingestion] Dataset written to: {output_path}")
+    splits = {split: len(ds) for split, ds in dataset.items()}
+    print(f"[data_ingestion] Dataset saved to: {output_path}")
+    print(f"[data_ingestion] Splits: {splits}")
 
 
 @click.command()
-@click.option("--data-source", required=True, help="Source data URI or path")
-@click.option("--output-path", required=True, help="Output dataset path")
-def main(data_source: str, output_path: str) -> None:
-    ingest_data(data_source, output_path)
+@click.option("--dataset-name", required=True, help="Hugging Face Hub dataset name or local path")
+@click.option("--output-path", required=True, help="Directory to save the Arrow dataset")
+@click.option(
+    "--config-name",
+    default="default",
+    show_default=True,
+    help="Dataset configuration / subset name",
+)
+def main(dataset_name: str, output_path: str, config_name: str) -> None:
+    ingest_data(dataset_name, output_path, config_name)
 
 
 if __name__ == "__main__":

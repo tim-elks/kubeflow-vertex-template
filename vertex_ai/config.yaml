@@ -14,10 +14,16 @@ pipeline:
 
   # Default parameter values (can be overridden at submission time)
   parameters:
-    data_source: gs://your-bucket/raw-data/dataset.csv
+    dataset_name: imdb
+    config_name: default
+    model_name: distilbert-base-uncased
+    text_column: text
     test_size: 0.2
-    n_estimators: 100
-    max_depth: 5
+    max_length: 128
+    num_labels: 2
+    num_epochs: 3
+    per_device_batch_size: 16
+    learning_rate: 0.00002
 
   # Optional: enable caching so unchanged steps are not re-executed
   enable_caching: true
