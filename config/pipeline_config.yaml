@@ -1,0 +1,50 @@
+# Pipeline configuration
+# Copy this file and fill in your project-specific values.
+# Do NOT commit sensitive values – use environment variables or Secret Manager.
+
+gcp:
+  project_id: "your-gcp-project-id"
+  region: "us-central1"
+  # GCS bucket used for pipeline artifacts, data, and model outputs
+  pipeline_root: "gs://your-bucket/pipeline-root"
+
+pipeline:
+  name: "ml-training-pipeline"
+  description: "End-to-end ML training pipeline using Kubeflow Pipelines on Vertex AI"
+
+data:
+  # GCS URI of your raw input dataset (CSV)
+  input_data_uri: "gs://your-bucket/data/raw_data.csv"
+  target_column: "label"
+
+preprocessing:
+  test_size: 0.2
+  random_state: 42
+
+training:
+  n_estimators: 100
+  max_depth: 10
+  random_state: 42
+
+evaluation:
+  # Minimum accuracy required before the model is deployed
+  accuracy_threshold: 0.80
+
+deployment:
+  model_display_name: "my-ml-model"
+  endpoint_display_name: "my-ml-model-endpoint"
+  machine_type: "n1-standard-4"
+  min_replica_count: 1
+  max_replica_count: 3
+  # Pre-built sklearn serving container from Google
+  serving_container_image_uri: "us-docker.pkg.dev/vertex-ai/prediction/sklearn-cpu.1-4:latest"
+
+# Docker image settings for pipeline component containers
+docker:
+  registry: "gcr.io/your-gcp-project-id"
+  image_tag: "latest"
+  images:
+    preprocessing: "gcr.io/your-gcp-project-id/preprocessing:latest"
+    training: "gcr.io/your-gcp-project-id/training:latest"
+    evaluation: "gcr.io/your-gcp-project-id/evaluation:latest"
+    deployment: "gcr.io/your-gcp-project-id/deployment:latest"

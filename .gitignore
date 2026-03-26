@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# GCP credentials (never commit these)
+*.json
+!pipeline_config.json.example
+service_account*.json
+credentials*.json
+application_default_credentials.json
+
+# Compiled pipeline specs (regenerate as needed)
+*.yaml.compiled
+pipeline_spec/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker
+.dockerignore
+
+# pytest cache
+.pytest_cache/
+
+# Temporary files
+tmp/
+temp/

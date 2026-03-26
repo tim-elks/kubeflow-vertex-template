@@ -1,0 +1,9 @@
+# Core Kubeflow Pipelines + Vertex AI dependencies
+kfp==2.7.0
+kfp-google-cloud==1.0.0b1
+google-cloud-aiplatform==1.50.0
+google-cloud-storage==2.16.0
+
+# Development/testing
+pytest==8.1.0
+pytest-mock==3.12.0
