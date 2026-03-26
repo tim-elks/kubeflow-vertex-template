@@ -46,6 +46,7 @@ OUTPUT_SPEC = os.path.join(os.path.dirname(__file__), "pipeline.yaml")
 # Component definitions
 # ---------------------------------------------------------------------------
 
+
 @dsl.component(base_image=DATA_INGESTION_IMAGE)
 def ingest_data_op(
     data_source: str,
@@ -53,14 +54,15 @@ def ingest_data_op(
 ) -> None:
     """KFP component wrapper for components/data_ingestion/component.py."""
     import subprocess
-    import sys
 
     subprocess.run(
         [
             sys.executable,
             "/app/component.py",
-            "--data-source", data_source,
-            "--output-path", raw_dataset.path,
+            "--data-source",
+            data_source,
+            "--output-path",
+            raw_dataset.path,
         ],
         check=True,
     )
@@ -75,16 +77,19 @@ def preprocess_op(
 ) -> None:
     """KFP component wrapper for components/preprocessing/component.py."""
     import subprocess
-    import sys
 
     subprocess.run(
         [
             sys.executable,
             "/app/component.py",
-            "--input-path", raw_dataset.path,
-            "--output-train-path", train_dataset.path,
-            "--output-test-path", test_dataset.path,
-            "--test-size", str(test_size),
+            "--input-path",
+            raw_dataset.path,
+            "--output-train-path",
+            train_dataset.path,
+            "--output-test-path",
+            test_dataset.path,
+            "--test-size",
+            str(test_size),
         ],
         check=True,
     )
@@ -99,16 +104,19 @@ def train_op(
 ) -> None:
     """KFP component wrapper for components/training/component.py."""
     import subprocess
-    import sys
 
     subprocess.run(
         [
             sys.executable,
             "/app/component.py",
-            "--train-data-path", train_dataset.path,
-            "--model-output-path", model.path,
-            "--n-estimators", str(n_estimators),
-            "--max-depth", str(max_depth),
+            "--train-data-path",
+            train_dataset.path,
+            "--model-output-path",
+            model.path,
+            "--n-estimators",
+            str(n_estimators),
+            "--max-depth",
+            str(max_depth),
         ],
         check=True,
     )
@@ -117,6 +125,7 @@ def train_op(
 # ---------------------------------------------------------------------------
 # Pipeline definition
 # ---------------------------------------------------------------------------
+
 
 @dsl.pipeline(
     name="kubeflow-vertex-template-pipeline",

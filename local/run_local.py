@@ -19,9 +19,9 @@ import tempfile
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 
-from components.data_ingestion.component import ingest_data
-from components.preprocessing.component import preprocess
-from components.training.component import train
+from components.data_ingestion.component import ingest_data  # noqa: E402
+from components.preprocessing.component import preprocess  # noqa: E402
+from components.training.component import train  # noqa: E402
 
 
 def run_pipeline_locally(

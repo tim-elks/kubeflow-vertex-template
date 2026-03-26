@@ -73,8 +73,8 @@ def submit_pipeline(config: dict) -> None:
 
     job.submit()
 
-    print(f"\nPipeline submitted successfully!")
-    print(f"Monitor progress in the Vertex AI console:")
+    print("\nPipeline submitted successfully!")
+    print("Monitor progress in the Vertex AI console:")
     print(f"  https://console.cloud.google.com/vertex-ai/pipelines?project={project_id}")
     print(f"\nJob resource name: {job.resource_name}")
 

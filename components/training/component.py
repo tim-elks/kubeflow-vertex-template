@@ -5,12 +5,15 @@ writes the model artifact to an output path for downstream serving or
 evaluation components.
 """
 
-import click
 import json
 import os
 
+import click
 
-def train(train_data_path: str, model_output_path: str, n_estimators: int = 100, max_depth: int = 5) -> None:
+
+def train(
+    train_data_path: str, model_output_path: str, n_estimators: int = 100, max_depth: int = 5
+) -> None:
     """Train a model on the preprocessed dataset.
 
     Args:
@@ -54,7 +57,9 @@ def train(train_data_path: str, model_output_path: str, n_estimators: int = 100,
 @click.command()
 @click.option("--train-data-path", required=True, help="Training data path")
 @click.option("--model-output-path", required=True, help="Output path for model artifact")
-@click.option("--n-estimators", type=int, default=100, show_default=True, help="Number of estimators")
+@click.option(
+    "--n-estimators", type=int, default=100, show_default=True, help="Number of estimators"
+)
 @click.option("--max-depth", type=int, default=5, show_default=True, help="Max tree depth")
 def main(train_data_path: str, model_output_path: str, n_estimators: int, max_depth: int) -> None:
     train(train_data_path, model_output_path, n_estimators, max_depth)

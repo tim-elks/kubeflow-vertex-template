@@ -5,12 +5,15 @@ feature engineering and train/test splitting, and writes the results to
 output paths that downstream components can consume.
 """
 
-import click
 import json
 import os
 
+import click
 
-def preprocess(input_path: str, output_train_path: str, output_test_path: str, test_size: float = 0.2) -> None:
+
+def preprocess(
+    input_path: str, output_train_path: str, output_test_path: str, test_size: float = 0.2
+) -> None:
     """Apply preprocessing to the raw dataset and split into train/test sets.
 
     Args:
