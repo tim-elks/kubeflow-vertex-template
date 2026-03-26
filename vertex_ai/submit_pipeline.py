@@ -34,7 +34,7 @@ def submit_pipeline(config: dict) -> None:
         from google.cloud import aiplatform
     except ImportError:
         print("ERROR: google-cloud-aiplatform is not installed.")
-        print("       Run: pip install google-cloud-aiplatform")
+        print("       Run: uv sync  (or: pip install google-cloud-aiplatform)")
         sys.exit(1)
 
     gcp = config["gcp"]

@@ -4,9 +4,10 @@ This component downloads or reads raw data and writes it to a GCS bucket
 (or local path during testing) as a dataset artifact.
 """
 
-import argparse
 import json
 import os
+
+import click
 
 
 def ingest_data(data_source: str, output_path: str) -> None:
@@ -38,13 +39,11 @@ def ingest_data(data_source: str, output_path: str) -> None:
     print(f"[data_ingestion] Dataset written to: {output_path}")
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Data ingestion component")
-    parser.add_argument("--data-source", required=True, help="Source data URI or path")
-    parser.add_argument("--output-path", required=True, help="Output dataset path")
-    args = parser.parse_args()
-
-    ingest_data(args.data_source, args.output_path)
+@click.command()
+@click.option("--data-source", required=True, help="Source data URI or path")
+@click.option("--output-path", required=True, help="Output dataset path")
+def main(data_source: str, output_path: str) -> None:
+    ingest_data(data_source, output_path)
 
 
 if __name__ == "__main__":

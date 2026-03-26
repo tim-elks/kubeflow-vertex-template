@@ -1,3 +1,4 @@
 # Add component-specific dependencies here
 # pandas, google-cloud-storage, db-dtypes, etc.
+click>=8.0.0
 pandas>=2.0.0

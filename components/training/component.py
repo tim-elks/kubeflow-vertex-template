@@ -5,7 +5,7 @@ writes the model artifact to an output path for downstream serving or
 evaluation components.
 """
 
-import argparse
+import click
 import json
 import os
 
@@ -51,15 +51,13 @@ def train(train_data_path: str, model_output_path: str, n_estimators: int = 100,
     print(f"[training] Metrics: {model_metadata['metrics']}")
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Training component")
-    parser.add_argument("--train-data-path", required=True, help="Training data path")
-    parser.add_argument("--model-output-path", required=True, help="Output path for model artifact")
-    parser.add_argument("--n-estimators", type=int, default=100, help="Number of estimators (default: 100)")
-    parser.add_argument("--max-depth", type=int, default=5, help="Max tree depth (default: 5)")
-    args = parser.parse_args()
-
-    train(args.train_data_path, args.model_output_path, args.n_estimators, args.max_depth)
+@click.command()
+@click.option("--train-data-path", required=True, help="Training data path")
+@click.option("--model-output-path", required=True, help="Output path for model artifact")
+@click.option("--n-estimators", type=int, default=100, show_default=True, help="Number of estimators")
+@click.option("--max-depth", type=int, default=5, show_default=True, help="Max tree depth")
+def main(train_data_path: str, model_output_path: str, n_estimators: int, max_depth: int) -> None:
+    train(train_data_path, model_output_path, n_estimators, max_depth)
 
 
 if __name__ == "__main__":

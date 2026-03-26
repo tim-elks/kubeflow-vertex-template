@@ -5,7 +5,7 @@ feature engineering and train/test splitting, and writes the results to
 output paths that downstream components can consume.
 """
 
-import argparse
+import click
 import json
 import os
 
@@ -44,15 +44,13 @@ def preprocess(input_path: str, output_train_path: str, output_test_path: str, t
         print(f"[preprocessing] Written: {path} ({data['rows']} rows)")
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Preprocessing component")
-    parser.add_argument("--input-path", required=True, help="Raw dataset path")
-    parser.add_argument("--output-train-path", required=True, help="Training split output path")
-    parser.add_argument("--output-test-path", required=True, help="Test split output path")
-    parser.add_argument("--test-size", type=float, default=0.2, help="Test fraction (default: 0.2)")
-    args = parser.parse_args()
-
-    preprocess(args.input_path, args.output_train_path, args.output_test_path, args.test_size)
+@click.command()
+@click.option("--input-path", required=True, help="Raw dataset path")
+@click.option("--output-train-path", required=True, help="Training split output path")
+@click.option("--output-test-path", required=True, help="Test split output path")
+@click.option("--test-size", type=float, default=0.2, show_default=True, help="Test fraction")
+def main(input_path: str, output_train_path: str, output_test_path: str, test_size: float) -> None:
+    preprocess(input_path, output_train_path, output_test_path, test_size)
 
 
 if __name__ == "__main__":

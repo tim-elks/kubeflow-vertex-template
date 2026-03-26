@@ -77,8 +77,8 @@ def run_pipeline_locally(
         print("\n" + "=" * 60)
         print("Local pipeline run complete!")
         print("Next step: containerise each component and submit to Vertex AI.")
-        print("  python pipeline/pipeline.py        # compile spec")
-        print("  python vertex_ai/submit_pipeline.py  # submit to Vertex AI")
+        print("  uv run python pipeline/pipeline.py          # compile spec")
+        print("  uv run python vertex_ai/submit_pipeline.py  # submit to Vertex AI")
         print("=" * 60)
 
 
