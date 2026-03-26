@@ -11,6 +11,7 @@ Vertex AI Pipelines via `vertex_ai/submit_pipeline.py`.
 """
 
 import os
+import sys
 
 from kfp import compiler, dsl
 from kfp.dsl import Dataset, Input, Model, Output
@@ -52,7 +53,7 @@ def ingest_data_op(
 
     subprocess.run(
         [
-            "/app/.venv/bin/python",
+            sys.executable,
             "/app/component.py",
             "--dataset-name",
             dataset_name,
@@ -80,7 +81,7 @@ def preprocess_op(
 
     subprocess.run(
         [
-            "/app/.venv/bin/python",
+            sys.executable,
             "/app/component.py",
             "--input-path",
             raw_dataset.path,
@@ -116,7 +117,7 @@ def train_op(
 
     subprocess.run(
         [
-            "/app/.venv/bin/python",
+            sys.executable,
             "/app/component.py",
             "--train-data-path",
             train_dataset.path,
